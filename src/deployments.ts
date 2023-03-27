@@ -1,7 +1,8 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { FromArgType, resolveFuncArgs, normalizeCallResult, normalizeRpcResult } from "./helpers";
+import _ from "lodash";
 
+import { FromArgType, resolveFuncArgs, normalizeCallResult, normalizeRpcResult } from "./helpers";
 import "./type-extensions";
 
 export const TASK_ADDR = "addr";
@@ -9,12 +10,16 @@ export const TASK_CALL = "call";
 export const TASK_SEND = "send";
 
 task(TASK_ADDR, "Get address of a deployed contract")
-  .addPositionalParam("name", "Contract name")
+  .addOptionalPositionalParam("name", "Contract name", "")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const { name } = taskArgs;
-
-    const deployment = await hre.deployments.get(name);
-    console.log(deployment.address);
+    if (name == "") {
+      const deployments = await hre.deployments.all();
+      console.log(_.mapValues(deployments, (d) => d.address));
+    } else {
+      const deployment = await hre.deployments.get(name);
+      console.log(deployment.address);
+    }
   });
 
 // TODO: call and send: --gas-price, --gas-limit, --nonce

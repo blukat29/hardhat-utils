@@ -47,6 +47,7 @@ hh accounts
 hh accounts --from 2 --json
 
 # Get address from deployments
+hh addr          # List all addresses
 hh addr Counter
 
 # Call contract function
