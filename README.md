@@ -38,6 +38,10 @@ TBD
 ## Usage
 
 ```sh
+# Print ABI
+hh abi Counter
+hh abi Counter --json
+
 # Show addresses and balances of loaded accounts
 hh accounts
 hh accounts --from 2 --json
