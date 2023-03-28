@@ -4,4 +4,5 @@ import { HardhatConfig, HardhatUserConfig } from "hardhat/types";
 
 export * from "./abi";
 export * from "./accounts";
+export * from "./blockscout";
 export * from "./deployments";

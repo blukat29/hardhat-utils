@@ -1,3 +1,5 @@
+# Adopted from https://github.com/blockscout/blockscout/blob/v4.1.8-beta/docker-compose/docker-compose-no-build-hardhat-network.yml
+# This docker-compose only supports upto blockscout 4.x.
 version: '3.8'
 
 services:
@@ -9,8 +11,7 @@ services:
         POSTGRES_PASSWORD: ''
         POSTGRES_USER: 'postgres'
         POSTGRES_HOST_AUTH_METHOD: 'trust'
-    ports:
-      - 7432:5432
+    command: ['postgres', '-c', 'max_connections=1000']
 
   blockscout:
     depends_on:
@@ -30,9 +31,10 @@ services:
         ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:8545/
         ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:8545/
         INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: 'true'
-        DATABASE_URL: postgresql://postgres:@host.docker.internal:7432/blockscout?ssl=false
+        INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER: ${DOCKER_DISABLE_TRACER:-true}
+        DATABASE_URL: postgresql://postgres:@db:5432/blockscout?ssl=false
         ECTO_USE_SSL: 'false'
         SECRET_KEY_BASE: '56NtB48ear7+wMSf0IQuWDAAazhpb31qyc7GiyspBP2vh7t5zlCsF5QDv76chXeN'
     ports:
-      - 4000:4000
+      - ${DOCKER_LISTEN:-4000}:4000
 

@@ -90,3 +90,7 @@ export function normalizeRpcResult(obj: any, opts?: NormalizeOpts) {
 export function PluginError(message: string, parent?: Error | undefined): Error {
   return new HardhatPluginError("hardhat-utils", message, parent)
 }
+
+export async function sleep(msec: number) {
+  await new Promise(resolve => setTimeout(resolve, msec));
+}
