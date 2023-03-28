@@ -1,5 +1,6 @@
 import type ethers from "ethers";
 import { BigNumber } from "ethers";
+import { HardhatPluginError } from "hardhat/plugins";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import _ from "lodash";
 
@@ -84,4 +85,8 @@ export function normalizeRpcResult(obj: any, opts?: NormalizeOpts) {
     obj[key] = normalizeItem(obj[key], opts);
   });
   return obj;
+}
+
+export function PluginError(message: string, parent?: Error | undefined): Error {
+  return new HardhatPluginError("hardhat-utils", message, parent)
 }

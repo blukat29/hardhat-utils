@@ -3,11 +3,12 @@ import type ethers from "ethers";
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import _ from "lodash";
+import {PluginError} from "./helpers";
 
 import "./type-extensions";
 
 export const TASK_ABI = "abi";
-export const TASK_ABI_UPLOAD = "abi-upload";
+export const TASK_ABI_UPLOAD = "upload-abi";
 
 task(TASK_ABI, "Get ABI of a contract")
   .addFlag("json", "print json abi")
@@ -69,6 +70,9 @@ task(TASK_ABI_UPLOAD, "Upload function and event signatures")
   .addPositionalParam("name", "Contract name", "")
   .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
     const { byte4, sigdb, name } = taskArgs;
+    if (!_.some(byte4, sigdb)) {
+      throw PluginError("No site selected (example: --byte4 --sigdb)");
+    }
 
     let names: string[];
     if (name == "") {
