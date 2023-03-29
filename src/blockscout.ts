@@ -33,7 +33,7 @@ task(TASK_EXPLORER, "Launch blockscout explorer")
     _.assign(process.env, extraEnvs);
     console.log('[+] Using env:', extraEnvs);
 
-    const dir = path.resolve(__dirname, "../../fixtures/blockscout");
+    const dir = path.resolve(__dirname, "../fixtures/blockscout");
     process.chdir(dir);
 
     // Start containers
