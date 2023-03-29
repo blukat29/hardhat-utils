@@ -58,4 +58,7 @@ hh call Counter number --to 0xaddr  # call designated address
 hh send Counter setNumber 123              # load address from deployments
 hh send Counter setNumber 123 --to 0xaddr  # call designated address
 hh send Counter setNumber 123 --from 0xaddr --unsigned  # print unsigned tx
+
+# Flatten and print compilation info and sort out multiple licenses
+hh smart-flatten Counter
 ```
