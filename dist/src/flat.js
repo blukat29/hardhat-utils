@@ -132,7 +132,7 @@ function deduplicateLicenses(source, forceLicense) {
             outputLicense = 'UNLICENSED';
         }
         else {
-            outputLicense = uniqLicenses[uniqLicenses.length - 1];
+            outputLicense = licenses[licenses.length - 1];
         }
     }
     outputSource = `// SPDX-License-Identifier: ${outputLicense}\n` + outputSource;
