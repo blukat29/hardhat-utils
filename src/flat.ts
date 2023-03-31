@@ -18,12 +18,12 @@ export const TASK_FLAT = "smart-flatten";
 
 task(TASK_FLAT, "Flatten source code of a contract and print compilation info")
   .addPositionalParam("nameOrPath", "Contract name or file path")
+  .addOptionalPositionalParam("outputPath", "Path to write flattened file (default: *.flat.sol)", undefined)
   .addOptionalParam("forceLicense", "Override to a SPDX license", "")
   .addFlag("includeDev", "Include dev dependencies (hardhat/*.sol, forge-std/*.sol)")
   .addFlag("noCompile", "Do not compile before running")
-  .addFlag("noWrite", "Do not write *.flat.sol file")
   .setAction(async (taskArgs) => {
-    const { nameOrPath, forceLicense, includeDev, noCompile, noWrite } = taskArgs;
+    const { nameOrPath, outputPath, forceLicense, includeDev, noCompile } = taskArgs;
 
     if (!noCompile) {
       await hre.run(TASK_COMPILE);
@@ -33,7 +33,7 @@ task(TASK_FLAT, "Flatten source code of a contract and print compilation info")
 
     resolved.sources.forEach((path) => {
       if (!includeDev && isDevDependency(path)) {
-        throw PluginError(`Detected dev dependency ${path}. Remove it or add --include-dev flag.`);
+        throw PluginError(`Dependency '${path}' is for debugging. If you want to include it in the flattened file, add --include-dev flag.`);
       };
     });
 
@@ -48,13 +48,17 @@ task(TASK_FLAT, "Flatten source code of a contract and print compilation info")
     };
     const finalSource = dedup.source;
 
-    console.log(finalSource);
-    console.error(metadata);
-
-    if (!noWrite) {
-      const flattenedPath = path.basename(resolved.sourcePath, ".sol") + ".flat.sol";
-      fs.writeFileSync(flattenedPath, finalSource)
+    let flattenedPath;
+    if (outputPath === undefined) {
+      const filename = path.basename(resolved.sourcePath, ".sol") + ".flat.sol";
+      flattenedPath = path.join(hre.config.paths.artifacts, filename);
+    } else {
+      flattenedPath = outputPath;
     }
+    fs.writeFileSync(flattenedPath, finalSource)
+
+    console.error(metadata);
+    console.log(`\nFlattened source written to ${flattenedPath}\n`);
   });
 
 interface ResolvedSource {
