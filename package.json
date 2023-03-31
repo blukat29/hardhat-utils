@@ -1,9 +1,9 @@
 {
-  "name": "@klaytn/hardhat-utils",
-  "version": "0.0.1",
+  "name": "@blukat29/hardhat-utils",
+  "version": "0.0.2",
   "description": "Hardhat utility tasks",
-  "repository": "github:klaytn/hardhat-utils",
-  "author": "Klaytn Foundation",
+  "repository": "github:blukat29/hardhat-utils",
+  "author": "",
   "license": "MIT",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",

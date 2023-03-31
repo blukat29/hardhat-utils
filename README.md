@@ -5,19 +5,19 @@
 ## Installation
 
 ```bash
-npm install @klaytn/hardhat-utils
+npm install @blukat29/hardhat-utils
 ```
 
 Import the plugin in your `hardhat.config.js`:
 
 ```js
-require("@klaytn/hardhat-utils");
+require("@blukat29/hardhat-utils");
 ```
 
 Or if you are using TypeScript, in your `hardhat.config.ts`:
 
 ```ts
-import "@klaytn/hardhat-utils";
+import "@blukat29/hardhat-utils";
 ```
 
 ## Required plugins
