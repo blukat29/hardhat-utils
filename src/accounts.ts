@@ -1,7 +1,9 @@
 import type ethers from "ethers"
+import fs from "fs";
 import { task } from "hardhat/config";
 import _ from "lodash";
 import * as _path from "path";
+import readlineSync from "readline-sync";
 
 import { FromArgType, PluginError } from "./helpers";
 import "./type-extensions";
@@ -92,6 +94,76 @@ task(TASK_FAUCET, "Send some coins to other accounts")
     }
   });
 
+task(TASK_KEYSTORE_DECRYPT, "Decrypt a keystore.json and print the private key")
+  .addPositionalParam("file", "Keystore file")
+  .addOptionalParam("password", "Keystore password", undefined)
+  .setAction(async (taskArgs) => {
+    let { file, password } = taskArgs;
+
+    let keystore = JSON.parse(fs.readFileSync(file).toString())
+    if (keystore.version == 4) {
+      keystore = convertKeystoreV4(keystore)
+    }
+
+    if (password === undefined) {
+      password = readlineSync.question("Keystore password: ", { hideEchoBack: true });
+    }
+    let keystoreStr = JSON.stringify(keystore)
+    let wallet = hre.ethers.Wallet.fromEncryptedJsonSync(keystoreStr, password)
+    console.log(wallet.address, wallet.privateKey);
+  });
+
+task(TASK_KEYSTORE_ENCRYPT, "Encrypt a private into a keystore.json")
+  .addOptionalPositionalParam("priv", "Private key", undefined)
+  .addOptionalParam("password", "Keystore password", undefined)
+  .setAction(async (taskArgs) => {
+    let { priv, password } = taskArgs;
+
+    if (priv == undefined) {
+      priv = readlineSync.question("Private key: ", { hideEchoBack: true });
+    }
+    if (password === undefined) {
+      password = readlineSync.question("Keystore password: ", { hideEchoBack: true });
+    }
+
+    const wallet = new hre.ethers.Wallet(priv);
+    const keystore = await wallet.encrypt(password);
+    console.log(keystore);
+  });
+
+task(TASK_KEYSTORE_KIP3, "Convert KIP-3 keystore v4 into keystore v3")
+  .addPositionalParam("input", "Input v4 file")
+  .addOptionalPositionalParam("output", "Output file. If omitted, printed to stdout", undefined)
+  .addFlag("silent", "Silently exit on error")
+  .setAction(async (taskArgs) => {
+    const { input, output, silent } = taskArgs;
+
+    let keystore: any;
+    try {
+      keystore = JSON.parse(fs.readFileSync(input).toString())
+      if (!isKeystore(keystore)) {
+        throw new Error(`Not a keystore: ${input}`);
+      }
+    } catch (e) {
+      if (silent) {
+        return;
+      } else {
+        throw e;
+      }
+    }
+
+    if (keystore.version == 4) {
+      keystore = convertKeystoreV4(keystore)
+    }
+
+    const keystoreStr = JSON.stringify(keystore);
+    if (output == undefined) {
+      console.log(keystoreStr);
+    } else {
+      fs.writeFileSync(output, keystoreStr);
+    }
+  });
+
 task(TASK_MNEMONIC, "Derive accounts from BIP-39 mnemonic")
   .addPositionalParam("words", "Mnemonic words", hardhatNetworkMnemonic)
   .addOptionalParam("path", "Derivation path", "m/44'/60'/0'/0/")
@@ -131,3 +203,38 @@ task(TASK_MNEMONIC, "Derive accounts from BIP-39 mnemonic")
     }
   });
 
+// Heuristically detect keystore v3 or v4
+function isKeystore(keystore: any): boolean {
+  const uuidRe = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/;
+  if (!uuidRe.test(keystore?.id)) {
+    return false;
+  }
+  if (!_.isNumber(keystore?.version)) {
+    return false;
+  }
+
+  if (keystore.version == 3 && keystore.crypto) {
+    return true;
+  } else if (keystore.version == 4 && keystore.keyring) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// Convert KIP-3 (V4) keystore to the standard V3
+// See https://kips.klaytn.foundation/KIPs/kip-3
+function convertKeystoreV4(keystore: any): any {
+  let keyring = keystore.keyring
+  let crypto
+  if (_.isArray(keyring[0])) {
+    crypto = keyring[0][0]
+  } else {
+    crypto = keyring[0]
+  }
+
+  keystore.crypto = crypto
+  keystore.version = 3
+  delete keystore.keyring
+  return keystore
+}

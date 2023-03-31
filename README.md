@@ -61,4 +61,12 @@ hh send Counter setNumber 123 --from 0xaddr --unsigned  # print unsigned tx
 
 # Flatten and print compilation info and sort out multiple licenses
 hh smart-flatten Counter
+
+# Work with keystore and mnemonic
+hh mnemonic --index 2
+hh keystore-decrypt k.json --password 1111
+hh keystore-encrypt 0xprivatekey --password 1111 > k.json
+hh keystore-kip3 v4.json v3.json
+find ./keys/*.json -exec hh keystore-kip3 {} {}_v3.json \;  # batch convert
+find ./keys/*.json -exec hh keystore-kip3 {} {} \;  # batch convert in-place
 ```
