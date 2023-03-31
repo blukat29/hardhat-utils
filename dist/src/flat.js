@@ -14,19 +14,19 @@ const helpers_1 = require("./helpers");
 exports.TASK_FLAT = "smart-flatten";
 (0, config_1.task)(exports.TASK_FLAT, "Flatten source code of a contract and print compilation info")
     .addPositionalParam("nameOrPath", "Contract name or file path")
+    .addOptionalPositionalParam("outputPath", "Path to write flattened file (default: *.flat.sol)", undefined)
     .addOptionalParam("forceLicense", "Override to a SPDX license", "")
     .addFlag("includeDev", "Include dev dependencies (hardhat/*.sol, forge-std/*.sol)")
     .addFlag("noCompile", "Do not compile before running")
-    .addFlag("noWrite", "Do not write *.flat.sol file")
     .setAction(async (taskArgs) => {
-    const { nameOrPath, forceLicense, includeDev, noCompile, noWrite } = taskArgs;
+    const { nameOrPath, outputPath, forceLicense, includeDev, noCompile } = taskArgs;
     if (!noCompile) {
         await hre.run(task_names_1.TASK_COMPILE);
     }
     const resolved = await resolveSource(nameOrPath);
     resolved.sources.forEach((path) => {
         if (!includeDev && isDevDependency(path)) {
-            throw (0, helpers_1.PluginError)(`Detected dev dependency ${path}. Remove it or add --include-dev flag.`);
+            throw (0, helpers_1.PluginError)(`Dependency '${path}' is for debugging. If you want to include it in the flattened file, add --include-dev flag.`);
         }
         ;
     });
@@ -36,12 +36,17 @@ exports.TASK_FLAT = "smart-flatten";
     const dedup = deduplicateLicenses(flattened, forceLicense);
     const metadata = Object.assign(Object.assign({}, resolved), { inputLicenses: dedup.inputLicenses, outputLicense: dedup.outputLicense });
     const finalSource = dedup.source;
-    console.log(finalSource);
-    console.error(metadata);
-    if (!noWrite) {
-        const flattenedPath = path_1.default.basename(resolved.sourcePath, ".sol") + ".flat.sol";
-        fs_1.default.writeFileSync(flattenedPath, finalSource);
+    let flattenedPath;
+    if (outputPath === undefined) {
+        const filename = path_1.default.basename(resolved.sourcePath, ".sol") + ".flat.sol";
+        flattenedPath = path_1.default.join(hre.config.paths.artifacts, filename);
     }
+    else {
+        flattenedPath = outputPath;
+    }
+    fs_1.default.writeFileSync(flattenedPath, finalSource);
+    console.error(metadata);
+    console.log(`\nFlattened source written to ${flattenedPath}\n`);
 });
 async function resolveSource(nameOrPath) {
     const resolved = {
