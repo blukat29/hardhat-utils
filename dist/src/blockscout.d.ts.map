@@ -1,0 +1,1 @@
+{"version":3,"file":"blockscout.d.ts","sourceRoot":"","sources":["../../src/blockscout.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,yBAAyB,EAAoB,MAAM,eAAe,CAAC;AAM5E,OAAO,mBAAmB,CAAC;AAC3B,OAAO,CAAC,MAAM,CAAC;IACb,IAAI,GAAG,EAAE,yBAAyB,CAAC;CACpC;AAED,eAAO,MAAM,aAAa,aAAa,CAAC"}
