@@ -69,4 +69,10 @@ hh keystore-encrypt 0xprivatekey --password 1111 > k.json
 hh keystore-kip3 v4.json v3.json
 find ./keys/*.json -exec hh keystore-kip3 {} {}_v3.json \;  # batch convert
 find ./keys/*.json -exec hh keystore-kip3 {} {} \;  # batch convert in-place
+
+# Launch blockscout explorer for local network
+# Requires docker-compose and docker
+hh explorer
+hh explorer --restart
+hh explorer --stop
 ```
