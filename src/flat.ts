@@ -159,7 +159,7 @@ function deduplicateLicenses(source: string, forceLicense?: string): LicenseDedu
     if (uniqLicenses.length == 0) {
       outputLicense = 'UNLICENSED';
     } else {
-      outputLicense = uniqLicenses[uniqLicenses.length - 1];
+      outputLicense = licenses[licenses.length - 1];
     }
   }
 
