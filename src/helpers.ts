@@ -1,5 +1,6 @@
 import type ethers from "ethers";
 import { BigNumber } from "ethers";
+import fs from "fs";
 import { HardhatPluginError } from "hardhat/plugins";
 import _ from "lodash";
 
@@ -103,4 +104,18 @@ export function PluginError(message: string, parent?: Error | undefined): Error 
 
 export async function sleep(msec: number) {
   await new Promise(resolve => setTimeout(resolve, msec));
+}
+
+export function isFilePath(path: string): boolean {
+  try {
+    fs.accessSync(path, fs.constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isDevDependency(path: string): boolean {
+  return _.startsWith(path, "lib/forge-std/") ||
+         _.startsWith(path, "hardhat/");
 }

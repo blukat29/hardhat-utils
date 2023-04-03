@@ -12,7 +12,7 @@ import _ from "lodash";
 import path from "path";
 
 import "./type-extensions";
-import {PluginError} from "./helpers";
+import {isDevDependency, isFilePath, PluginError} from "./helpers";
 
 export const TASK_FLAT = "smart-flatten";
 
@@ -115,20 +115,6 @@ async function resolveSource(nameOrPath: string): Promise<ResolvedSource> {
     resolved.solcSettings.optimizer = buildInfo.input.settings.optimizer;
   }
   return resolved;
-}
-
-function isFilePath(path: string): boolean {
-  try {
-    fs.accessSync(path, fs.constants.R_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function isDevDependency(path: string): boolean {
-  return _.startsWith(path, "lib/forge-std/") ||
-         _.startsWith(path, "hardhat/");
 }
 
 interface LicenseDedup {
