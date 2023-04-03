@@ -1,8 +1,9 @@
 import type ethers from "ethers";
 import { BigNumber } from "ethers";
 import { HardhatPluginError } from "hardhat/plugins";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 import _ from "lodash";
+
+import "./type-extensions";
 
 export class FromArgType {
   static validate(argName: string, argumentValue: any): void {
@@ -42,10 +43,7 @@ interface ResolvedFuncArgs {
   unsignedTx: any;
 }
 
-export async function resolveFuncArgs(
-  taskArgs: FuncTaskCommonArgs,
-  hre: HardhatRuntimeEnvironment,
-): Promise<ResolvedFuncArgs> {
+export async function resolveFuncArgs(taskArgs: FuncTaskCommonArgs): Promise<ResolvedFuncArgs> {
   const { name, func, args, from, to } = taskArgs;
 
   let contract: ethers.Contract;

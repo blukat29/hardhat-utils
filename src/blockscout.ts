@@ -1,16 +1,12 @@
 import axios, { AxiosError } from "axios";
 import child_process from "child_process";
 import { task } from "hardhat/config";
-import { HardhatRuntimeEnvironment, ProviderRpcError } from "hardhat/types";
 import _ from "lodash";
 import path from "path";
 import process from "process";
 
 import { PluginError, sleep } from "./helpers";
 import "./type-extensions";
-declare global {
-  var hre: HardhatRuntimeEnvironment;
-}
 
 export const TASK_EXPLORER = "explorer";
 

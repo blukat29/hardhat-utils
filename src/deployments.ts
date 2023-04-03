@@ -1,6 +1,6 @@
 import { Deployment } from "hardhat-deploy/dist/types";
 import { task } from "hardhat/config";
-import { Artifact, HardhatRuntimeEnvironment } from "hardhat/types";
+import { Artifact } from "hardhat/types";
 import _ from "lodash";
 
 import { FromArgType, resolveFuncArgs, normalizeCallResult, normalizeRpcResult } from "./helpers";
@@ -13,7 +13,7 @@ export const TASK_IMPORT = "import";
 
 task(TASK_ADDR, "Get address of a deployed contract")
   .addOptionalPositionalParam("name", "Contract name", "")
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
+  .setAction(async (taskArgs) => {
     const { name } = taskArgs;
     if (name == "") {
       const deployments = await hre.deployments.all();
@@ -33,9 +33,9 @@ task(TASK_CALL, "Call a read-only function to a contract")
   .addPositionalParam("name", "Contract name (example: 'Counter', 'src/Lock.sol:Lock')")
   .addPositionalParam("func", "Function name or signature (example: 'number()', 'balanceOf(address)')")
   .addVariadicPositionalParam("args", "call arguments", [])
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
+  .setAction(async (taskArgs) => {
     const { func, raw, dec } = taskArgs;
-    const { contract, sender, unsignedTx } = await resolveFuncArgs(taskArgs, hre);
+    const { contract, sender, unsignedTx } = await resolveFuncArgs(taskArgs);
 
     let output = await sender.call(unsignedTx);
     if (raw) {
@@ -54,9 +54,9 @@ task(TASK_SEND, "Send a transaction to a contract")
   .addPositionalParam("name", "Contract name (example: 'Counter', 'src/Lock.sol:Lock')")
   .addPositionalParam("func", "Function name or signature (example: 'number()', 'balanceOf(address)')")
   .addVariadicPositionalParam("args", "call arguments", [])
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
+  .setAction(async (taskArgs) => {
 		const { unsigned, dec } = taskArgs;
-		const { sender, unsignedTx } = await resolveFuncArgs(taskArgs, hre);
+		const { sender, unsignedTx } = await resolveFuncArgs(taskArgs);
 
 		if (unsigned) {
 			console.log(normalizeRpcResult(unsignedTx, { dec }));
