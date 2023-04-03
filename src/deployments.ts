@@ -1,5 +1,6 @@
+import { Deployment } from "hardhat-deploy/dist/types";
 import { task } from "hardhat/config";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { Artifact, HardhatRuntimeEnvironment } from "hardhat/types";
 import _ from "lodash";
 
 import { FromArgType, resolveFuncArgs, normalizeCallResult, normalizeRpcResult } from "./helpers";
@@ -8,6 +9,7 @@ import "./type-extensions";
 export const TASK_ADDR = "addr";
 export const TASK_CALL = "call";
 export const TASK_SEND = "send";
+export const TASK_IMPORT = "import";
 
 task(TASK_ADDR, "Get address of a deployed contract")
   .addOptionalPositionalParam("name", "Contract name", "")
@@ -65,4 +67,36 @@ task(TASK_SEND, "Send a transaction to a contract")
 		let tx = await sender.sendTransaction(unsignedTx);
 		let rc = await tx.wait();
 		console.log(normalizeRpcResult(rc, { dec }));
+  });
+
+task(TASK_IMPORT, "Import a contract deployment")
+  .addPositionalParam("contractName", "Contract name")
+  .addPositionalParam("address", "Contract address")
+  .addOptionalPositionalParam("txhash", "The deploy transaction hash", undefined)
+  .setAction(async (taskArgs) => {
+    const { contractName, address, txhash } = taskArgs;
+    const d: Deployment = {
+      address: address,
+      abi: [],
+    };
+
+    let artifact: Artifact;
+    try {
+      artifact = await hre.artifacts.readArtifact(contractName);
+    } catch {
+      artifact = await hre.deployments.getArtifact(contractName);
+    }
+    d.abi = artifact.abi;
+
+    if (txhash !== undefined) {
+      d.transactionHash = txhash;
+      d.receipt = await hre.ethers.provider.getTransactionReceipt(txhash)
+    }
+
+    d.deployedBytecode = await hre.ethers.provider.getCode(address);
+
+    await hre.deployments.save(contractName, d);
+    // Wait for the file creation. TODO: remove sleep
+    // https://github.com/wighawag/hardhat-deploy/pull/436
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   });
