@@ -1,5 +1,5 @@
 import type ethers from "ethers";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import "./type-extensions";
 export declare class FromArgType {
     static validate(argName: string, argumentValue: any): void;
     static parse(argName: string, strValue: string): any;
@@ -20,7 +20,7 @@ interface ResolvedFuncArgs {
     sender: ethers.Signer;
     unsignedTx: any;
 }
-export declare function resolveFuncArgs(taskArgs: FuncTaskCommonArgs, hre: HardhatRuntimeEnvironment): Promise<ResolvedFuncArgs>;
+export declare function resolveFuncArgs(taskArgs: FuncTaskCommonArgs): Promise<ResolvedFuncArgs>;
 export interface NormalizeOpts {
     dec: boolean;
 }

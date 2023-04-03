@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TASK_SEND = exports.TASK_CALL = exports.TASK_ADDR = void 0;
+exports.TASK_IMPORT = exports.TASK_SEND = exports.TASK_CALL = exports.TASK_ADDR = void 0;
 const config_1 = require("hardhat/config");
 const lodash_1 = __importDefault(require("lodash"));
 const helpers_1 = require("./helpers");
@@ -11,9 +11,10 @@ require("./type-extensions");
 exports.TASK_ADDR = "addr";
 exports.TASK_CALL = "call";
 exports.TASK_SEND = "send";
+exports.TASK_IMPORT = "import";
 (0, config_1.task)(exports.TASK_ADDR, "Get address of a deployed contract")
     .addOptionalPositionalParam("name", "Contract name", "")
-    .setAction(async (taskArgs, hre) => {
+    .setAction(async (taskArgs) => {
     const { name } = taskArgs;
     if (name == "") {
         const deployments = await hre.deployments.all();
@@ -33,9 +34,9 @@ exports.TASK_SEND = "send";
     .addPositionalParam("name", "Contract name (example: 'Counter', 'src/Lock.sol:Lock')")
     .addPositionalParam("func", "Function name or signature (example: 'number()', 'balanceOf(address)')")
     .addVariadicPositionalParam("args", "call arguments", [])
-    .setAction(async (taskArgs, hre) => {
+    .setAction(async (taskArgs) => {
     const { func, raw, dec } = taskArgs;
-    const { contract, sender, unsignedTx } = await (0, helpers_1.resolveFuncArgs)(taskArgs, hre);
+    const { contract, sender, unsignedTx } = await (0, helpers_1.resolveFuncArgs)(taskArgs);
     let output = await sender.call(unsignedTx);
     if (raw) {
         console.log(output);
@@ -53,9 +54,9 @@ exports.TASK_SEND = "send";
     .addPositionalParam("name", "Contract name (example: 'Counter', 'src/Lock.sol:Lock')")
     .addPositionalParam("func", "Function name or signature (example: 'number()', 'balanceOf(address)')")
     .addVariadicPositionalParam("args", "call arguments", [])
-    .setAction(async (taskArgs, hre) => {
+    .setAction(async (taskArgs) => {
     const { unsigned, dec } = taskArgs;
-    const { sender, unsignedTx } = await (0, helpers_1.resolveFuncArgs)(taskArgs, hre);
+    const { sender, unsignedTx } = await (0, helpers_1.resolveFuncArgs)(taskArgs);
     if (unsigned) {
         console.log((0, helpers_1.normalizeRpcResult)(unsignedTx, { dec }));
         return;
@@ -64,5 +65,33 @@ exports.TASK_SEND = "send";
     let tx = await sender.sendTransaction(unsignedTx);
     let rc = await tx.wait();
     console.log((0, helpers_1.normalizeRpcResult)(rc, { dec }));
+});
+(0, config_1.task)(exports.TASK_IMPORT, "Import a contract deployment")
+    .addPositionalParam("contractName", "Contract name")
+    .addPositionalParam("address", "Contract address")
+    .addOptionalPositionalParam("txhash", "The deploy transaction hash", undefined)
+    .setAction(async (taskArgs) => {
+    const { contractName, address, txhash } = taskArgs;
+    const d = {
+        address: address,
+        abi: [],
+    };
+    let artifact;
+    try {
+        artifact = await hre.artifacts.readArtifact(contractName);
+    }
+    catch (_a) {
+        artifact = await hre.deployments.getArtifact(contractName);
+    }
+    d.abi = artifact.abi;
+    if (txhash !== undefined) {
+        d.transactionHash = txhash;
+        d.receipt = await hre.ethers.provider.getTransactionReceipt(txhash);
+    }
+    d.deployedBytecode = await hre.ethers.provider.getCode(address);
+    await hre.deployments.save(contractName, d);
+    // Wait for the file creation. TODO: remove sleep
+    // https://github.com/wighawag/hardhat-deploy/pull/436
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 });
 //# sourceMappingURL=deployments.js.map

@@ -14,12 +14,14 @@ exports.TASK_ABI_UPLOAD = "upload-abi";
 (0, config_1.task)(exports.TASK_ABI, "Get ABI of a contract")
     .addFlag("json", "print json abi")
     .addOptionalPositionalParam("name", "Contract name", "")
-    .setAction(async (taskArgs, hre) => {
+    .setAction(async (taskArgs) => {
     const { name, json } = taskArgs;
     if (name == "") {
-        const names = await hre.artifacts.getAllFullyQualifiedNames();
+        const artifactNames = await hre.artifacts.getAllFullyQualifiedNames();
+        const deployedNames = lodash_1.default.keys(await hre.deployments.all());
+        const names = lodash_1.default.uniq(lodash_1.default.concat(artifactNames, deployedNames));
         for (const n of names) {
-            let abi = stringifyAbi(hre, n, json);
+            let abi = await stringifyAbi(n, json);
             if (abi && abi.length > 0 && abi != "[]") {
                 console.log(`\n# ${n}`);
                 console.log(abi);
@@ -27,11 +29,19 @@ exports.TASK_ABI_UPLOAD = "upload-abi";
         }
     }
     else {
-        console.log(stringifyAbi(hre, name, json));
+        let abi = await stringifyAbi(name, json);
+        console.log(abi);
     }
 });
-function stringifyAbi(hre, name, json) {
-    const { abi } = hre.artifacts.readArtifactSync(name);
+async function stringifyAbi(name, json) {
+    let artifact;
+    try {
+        artifact = await hre.artifacts.readArtifact(name);
+    }
+    catch (_a) {
+        artifact = await hre.deployments.getArtifact(name);
+    }
+    const abi = artifact.abi;
     const iface = new hre.ethers.utils.Interface(abi);
     // See all FormatTypes: https://github.com/ethers-io/ethers.js/blob/v5.7/packages/abi/src.ts/fragments.ts#L235
     const formats = hre.ethers.utils.FormatTypes;
@@ -64,7 +74,7 @@ function stringifyAbi(hre, name, json) {
     .addFlag("byte4", "Upload to https://www.4byte.directory/")
     .addFlag("sigdb", "Upload to https://openchain.xyz/signatures")
     .addPositionalParam("name", "Contract name", "")
-    .setAction(async (taskArgs, hre) => {
+    .setAction(async (taskArgs) => {
     const { byte4, sigdb, name } = taskArgs;
     if (!lodash_1.default.some(byte4, sigdb)) {
         throw (0, helpers_1.PluginError)("No site selected (example: --byte4 --sigdb)");
@@ -90,7 +100,7 @@ function stringifyAbi(hre, name, json) {
         console.log(await upload4bytes(abis));
     }
     if (sigdb) {
-        console.log(await uploadSigdb(hre, abis));
+        console.log(await uploadSigdb(abis));
     }
 });
 // https://www.4byte.directory/docs/
@@ -103,7 +113,7 @@ async function upload4bytes(abis) {
 }
 // https://docs.openchain.xyz/
 const URL_sigdb = "https://api.openchain.xyz/signature-database/v1/import";
-async function uploadSigdb(hre, abis) {
+async function uploadSigdb(abis) {
     console.log(`..to ${URL_sigdb}`);
     const formats = hre.ethers.utils.FormatTypes;
     const functions = [];

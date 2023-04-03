@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sleep = exports.PluginError = exports.normalizeRpcResult = exports.normalizeCallResult = exports.resolveFuncArgs = exports.AmountArgType = exports.FromArgType = void 0;
 const plugins_1 = require("hardhat/plugins");
 const lodash_1 = __importDefault(require("lodash"));
+require("./type-extensions");
 class FromArgType {
     static validate(argName, argumentValue) {
     }
@@ -32,7 +33,7 @@ class AmountArgType {
     }
 }
 exports.AmountArgType = AmountArgType;
-async function resolveFuncArgs(taskArgs, hre) {
+async function resolveFuncArgs(taskArgs) {
     const { name, func, args, from, to } = taskArgs;
     let contract;
     if (to == "") {
