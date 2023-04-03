@@ -1,7 +1,7 @@
 import axios from "axios";
 import type ethers from "ethers";
 import { task } from "hardhat/config";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { Artifact } from "hardhat/types";
 import _ from "lodash";
 import {PluginError} from "./helpers";
 
@@ -13,25 +13,35 @@ export const TASK_ABI_UPLOAD = "upload-abi";
 task(TASK_ABI, "Get ABI of a contract")
   .addFlag("json", "print json abi")
   .addOptionalPositionalParam("name", "Contract name", "")
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
+  .setAction(async (taskArgs) => {
     const { name, json } = taskArgs;
 
     if (name == "") {
-      const names = await hre.artifacts.getAllFullyQualifiedNames();
+      const artifactNames = await hre.artifacts.getAllFullyQualifiedNames();
+      const deployedNames = _.keys(await hre.deployments.all());
+      const names = _.uniq(_.concat(artifactNames, deployedNames));
+
       for (const n of names) {
-        let abi = stringifyAbi(hre, n, json);
+        let abi = await stringifyAbi(n, json);
         if (abi && abi.length > 0 && abi != "[]") {
           console.log(`\n# ${n}`);
           console.log(abi);
         }
       }
     } else {
-      console.log(stringifyAbi(hre, name, json));
+      let abi = await stringifyAbi(name, json);
+      console.log(abi);
     }
   });
 
-function stringifyAbi(hre: HardhatRuntimeEnvironment, name: string, json: boolean): any {
-  const { abi } = hre.artifacts.readArtifactSync(name);
+async function stringifyAbi(name: string, json: boolean): Promise<any> {
+  let artifact: Artifact;
+  try {
+    artifact = await hre.artifacts.readArtifact(name);
+  } catch {
+    artifact = await hre.deployments.getArtifact(name);
+  }
+  const abi = artifact.abi;
   const iface = new hre.ethers.utils.Interface(abi);
 
   // See all FormatTypes: https://github.com/ethers-io/ethers.js/blob/v5.7/packages/abi/src.ts/fragments.ts#L235
@@ -68,7 +78,7 @@ task(TASK_ABI_UPLOAD, "Upload function and event signatures")
   .addFlag("byte4", "Upload to https://www.4byte.directory/")
   .addFlag("sigdb", "Upload to https://openchain.xyz/signatures")
   .addPositionalParam("name", "Contract name", "")
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
+  .setAction(async (taskArgs) => {
     const { byte4, sigdb, name } = taskArgs;
     if (!_.some(byte4, sigdb)) {
       throw PluginError("No site selected (example: --byte4 --sigdb)");
@@ -96,7 +106,7 @@ task(TASK_ABI_UPLOAD, "Upload function and event signatures")
       console.log(await upload4bytes(abis));
     }
     if (sigdb) {
-      console.log(await uploadSigdb(hre, abis));
+      console.log(await uploadSigdb(abis));
     }
   });
 
@@ -111,7 +121,7 @@ async function upload4bytes(abis: any[]): Promise<any> {
 
 // https://docs.openchain.xyz/
 const URL_sigdb = "https://api.openchain.xyz/signature-database/v1/import";
-async function uploadSigdb(hre: HardhatRuntimeEnvironment, abis: any[]): Promise<any> {
+async function uploadSigdb(abis: any[]): Promise<any> {
   console.log(`..to ${URL_sigdb}`);
   const formats = hre.ethers.utils.FormatTypes;
 
