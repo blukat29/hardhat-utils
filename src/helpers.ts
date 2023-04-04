@@ -76,6 +76,12 @@ function normalizeItem(item: any, opts?: NormalizeOpts): any {
     } else {
       return item.toHexString();
     }
+  } else if (_.isNumber(item)) {
+    if (opts?.dec) {
+      return item.toString();
+    } else {
+      return "0x" + item.toString(16);
+    }
   } else {
     return item;
   }
@@ -118,4 +124,17 @@ export function isFilePath(path: string): boolean {
 export function isDevDependency(path: string): boolean {
   return _.startsWith(path, "lib/forge-std/") ||
          _.startsWith(path, "hardhat/");
+}
+
+export async function currentNetworkEIP3085(): Promise<any> {
+  const ethersNet = await hre.ethers.provider.getNetwork();
+  const chainId = ethersNet.chainId;
+  const url = hre.ethers.provider.connection.url;
+
+  const param = { // https://eips.ethereum.org/EIPS/eip-3085
+    chainId: '0x' + chainId.toString(16),
+    chainName: 'hardhat:' + hre.network.name,
+    rpcUrls: [url],
+  }
+  return param;
 }

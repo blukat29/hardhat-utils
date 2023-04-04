@@ -2,6 +2,7 @@ import { Deployment } from "hardhat-deploy/dist/types";
 import { task } from "hardhat/config";
 import { Artifact } from "hardhat/types";
 import _ from "lodash";
+import {launchBrowserSigner} from "./browser";
 
 import { FromArgType, resolveFuncArgs, normalizeCallResult, normalizeRpcResult } from "./helpers";
 import "./type-extensions";
@@ -50,12 +51,13 @@ task(TASK_SEND, "Send a transaction to a contract")
   .addOptionalParam("from", "Caller address or index", 0, FromArgType)
   .addOptionalParam("to", "Target address. Loaded from deployments if empty.", "")
   .addFlag("unsigned", "Print unsigned tx and exit")
+  .addFlag("browser", "Launch a webpage to sign tx on browser")
   .addFlag("dec", "Print numbers in decimal (default is hex)")
   .addPositionalParam("name", "Contract name (example: 'Counter', 'src/Lock.sol:Lock')")
   .addPositionalParam("func", "Function name or signature (example: 'number()', 'balanceOf(address)')")
   .addVariadicPositionalParam("args", "call arguments", [])
   .setAction(async (taskArgs) => {
-		const { unsigned, dec } = taskArgs;
+		const { unsigned, browser, dec } = taskArgs;
 		const { sender, unsignedTx } = await resolveFuncArgs(taskArgs);
 
 		if (unsigned) {
@@ -63,10 +65,18 @@ task(TASK_SEND, "Send a transaction to a contract")
 			return;
 		}
 
+    let rc;
+    if (browser) {
+      const tx = await sender.populateTransaction(unsignedTx);
+      const txhash = await launchBrowserSigner(tx);
+      rc = await hre.ethers.provider.waitForTransaction(txhash);
+    } else {
+      const tx = await sender.sendTransaction(unsignedTx);
+      rc = await tx.wait();
+    }
+
     // TODO: decode events
-		let tx = await sender.sendTransaction(unsignedTx);
-		let rc = await tx.wait();
-		console.log(normalizeRpcResult(rc, { dec }));
+    console.log(normalizeRpcResult(rc, { dec }));
   });
 
 task(TASK_IMPORT, "Import a contract deployment")
