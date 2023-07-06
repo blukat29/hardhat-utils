@@ -1,3 +1,5 @@
+## Moved to https://github.com/klaytn/hardhat-utils
+
 # hardhat-utils
 
 [Hardhat](https://hardhat.org) utility tasks.
